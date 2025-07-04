@@ -9,6 +9,6 @@ namespace Application.Interfaces
 {
 	public interface IShippingService
 	{
-		void Ship(List<IShippable> items);
+		void Ship(List<IShippable> items, List<string> shipmentNotice);
 	}
 }

@@ -8,6 +8,7 @@ namespace Domain.Entities
 {
 	public class CartItem
 	{
+		public int Id { get; set; }
 		public Product Product { get; set; } // The product being added
 		public int Quantity { get; set; } // Quantity requested
 	}

@@ -4,12 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain.Entities
+namespace Application.DTOs
 {
-	public class Cart
+	public class CheckoutRequestDto
 	{
-		public int Id { get; set; }
 		public int CustomerId { get; set; }
-		public List<CartItem> Items { get; set; } = new();
+		public List<CartItemDto> Items { get; set; }
 	}
 }

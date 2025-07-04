@@ -1,4 +1,5 @@
-﻿using Application.Interfaces;
+﻿using Application.DTOs;
+using Application.Interfaces;
 using Domain.Entities;
 using Domain.Interfaces;
 using System;
@@ -12,30 +13,35 @@ namespace Application.Services
 	public class CheckoutService
 	{
 		private readonly IShippingService _shippingService;
+
 		public CheckoutService(IShippingService shippingService)
 		{
 			_shippingService = shippingService;
 		}
 
-		public void Checkout(Customer customer, Cart cart)
+		public CheckoutResultDto Checkout(Customer customer, List<CartItem> cartItems)
 		{
-			if (!cart.Items.Any())
+			if (cartItems == null || !cartItems.Any())
 				throw new Exception("Cart is empty.");
 
 			decimal subtotal = 0;
 			double totalWeight = 0;
 			var shippableItems = new List<IShippable>();
+			var shipmentNotice = new List<string>();
+			var receipt = new List<string>();
 
-			foreach (var item in cart.Items)
+			foreach (var item in cartItems)
 			{
 				if (item.Product is IExpirable expirable && expirable.IsExpired())
 					throw new Exception($"{item.Product.Name} is expired.");
 				if (item.Quantity > item.Product.Quantity)
 					throw new Exception($"{item.Product.Name} is out of stock.");
 				subtotal += item.Product.Price * item.Quantity;
+				receipt.Add($"{item.Quantity}x {item.Product.Name} {item.Product.Price * item.Quantity}");
 				if (item.Product is IShippable shippable)
 				{
 					shippableItems.Add(shippable);
+					shipmentNotice.Add($"{item.Quantity}x {shippable.GetName()} {shippable.GetWeight() * item.Quantity}kg");
 					totalWeight += shippable.GetWeight() * item.Quantity;
 				}
 			}
@@ -46,24 +52,22 @@ namespace Application.Services
 			if (customer.Balance < total)
 				throw new Exception("Insufficient balance.");
 
-			// Deduct quantities and balance
-			foreach (var item in cart.Items)
+			foreach (var item in cartItems)
 				item.Product.Quantity -= item.Quantity;
 			customer.Balance -= total;
 
-			// Ship items
 			if (shippableItems.Any())
-				_shippingService.Ship(shippableItems);
+				_shippingService.Ship(shippableItems, shipmentNotice);
 
-			// Print receipt
-			Console.WriteLine("** Checkout receipt **");
-			foreach (var item in cart.Items)
-				Console.WriteLine($"{item.Quantity}x {item.Product.Name} {item.Product.Price * item.Quantity}");
-			Console.WriteLine("----------------------");
-			Console.WriteLine($"Subtotal {subtotal}");
-			Console.WriteLine($"Shipping {shippingFee}");
-			Console.WriteLine($"Amount {total}");
-			Console.WriteLine($"Customer balance {customer.Balance}");
+			return new CheckoutResultDto
+			{
+				Subtotal = subtotal,
+				Shipping = shippingFee,
+				Total = total,
+				CustomerBalance = customer.Balance,
+				ShipmentNotice = shipmentNotice,
+				Receipt = receipt
+			};
 		}
 	}
 }

@@ -6,19 +6,17 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.Services
+namespace Infrastructure.Services
 {
 	public class ShippingService : IShippingService
 	{
-		public void Ship(List<IShippable> items)
+		public void Ship(List<IShippable> items, List<string> shipmentNotice)
 		{
+			// This could be a call to an external shipping API, but for now just log/print
 			Console.WriteLine("** Shipment notice **");
-			double totalWeight = 0;
-			foreach (var item in items)
-			{
-				Console.WriteLine($"{item.GetName()} {item.GetWeight()}kg");
-				totalWeight += item.GetWeight();
-			}
+			foreach (var line in shipmentNotice)
+				Console.WriteLine(line);
+			double totalWeight = items.Sum(i => i.GetWeight());
 			Console.WriteLine($"Total package weight {totalWeight}kg");
 		}
 	}
