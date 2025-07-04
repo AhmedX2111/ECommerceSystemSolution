@@ -37,11 +37,12 @@ namespace Application.Services
 				if (item.Quantity > item.Product.Quantity)
 					throw new Exception($"{item.Product.Name} is out of stock.");
 				subtotal += item.Product.Price * item.Quantity;
-				receipt.Add($"{item.Quantity}x {item.Product.Name} {item.Product.Price * item.Quantity}");
+				receipt.Add($"{item.Quantity}x {item.Product.Name} {(int)(item.Product.Price * item.Quantity)}");
 				if (item.Product is IShippable shippable)
 				{
 					shippableItems.Add(shippable);
-					shipmentNotice.Add($"{item.Quantity}x {shippable.GetName()} {shippable.GetWeight() * item.Quantity}kg");
+					int grams = (int)(shippable.GetWeight() * item.Quantity * 1000);
+					shipmentNotice.Add($"{item.Quantity}x {shippable.GetName()} {grams}g");
 					totalWeight += shippable.GetWeight() * item.Quantity;
 				}
 			}
@@ -59,6 +60,12 @@ namespace Application.Services
 			if (shippableItems.Any())
 				_shippingService.Ship(shippableItems, shipmentNotice);
 
+			// Add total package weight as the last line in shipmentNotice
+			if (shipmentNotice.Count > 0)
+			{
+				shipmentNotice.Add($"Total package weight {totalWeight:0.0}kg");
+			}
+
 			return new CheckoutResultDto
 			{
 				Subtotal = subtotal,
@@ -69,5 +76,27 @@ namespace Application.Services
 				Receipt = receipt
 			};
 		}
+
+		// Optional: Print the result in the specified console format
+		//public void PrintCheckoutResult(CheckoutResultDto result)
+		//{
+		//	if (result.ShipmentNotice.Any())
+		//	{
+		//		Console.WriteLine("** Shipment notice **");
+		//		foreach (var line in result.ShipmentNotice)
+		//		{
+		//			Console.WriteLine(line);
+		//		}
+		//	}
+		//	Console.WriteLine("** Checkout receipt **");
+		//	foreach (var line in result.Receipt)
+		//	{
+		//		Console.WriteLine(line);
+		//	}
+		//	Console.WriteLine("----------------------");
+		//	Console.WriteLine($"Subtotal {result.Subtotal:0}");
+		//	Console.WriteLine($"Shipping {result.Shipping:0}");
+		//	Console.WriteLine($"Amount {result.Total:0}");
+		//}
 	}
 }

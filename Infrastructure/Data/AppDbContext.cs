@@ -24,13 +24,49 @@ namespace Infrastructure.Data
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
-			// Configure entity relationships and seed data here
+			// TPH (Table-per-hierarchy) for Product inheritance
+			modelBuilder.Entity<Product>()
+				.HasDiscriminator<string>("ProductType")
+				.HasValue<Cheese>("Cheese")
+				.HasValue<TV>("TV")
+				.HasValue<Biscuits>("Biscuits");
+
+			// Cart - Customer (many-to-one)
+			modelBuilder.Entity<Cart>()
+				.HasOne(c => c.Customer)
+				.WithMany() // If Customer has List<Cart> Carts, use .WithMany(cu => cu.Carts)
+				.HasForeignKey(c => c.CustomerId)
+				.OnDelete(DeleteBehavior.Cascade);
+
+			// Cart - CartItems (one-to-many)
+			modelBuilder.Entity<Cart>()
+				.HasMany(c => c.Items)
+				.WithOne(ci => ci.Cart)
+				.HasForeignKey(ci => ci.CartId)
+				.OnDelete(DeleteBehavior.Cascade);
+
+			// CartItem - Product (many-to-one)
+			modelBuilder.Entity<CartItem>()
+				.HasOne(ci => ci.Product)
+				.WithMany()
+				.HasForeignKey(ci => ci.ProductId)
+				.OnDelete(DeleteBehavior.Restrict);
+
+
+			// Decimal precision for Price and Balance
+			modelBuilder.Entity<Product>()
+				.Property(p => p.Price)
+				.HasColumnType("decimal(18,2)");
+			modelBuilder.Entity<Customer>()
+				.Property(c => c.Balance)
+				.HasColumnType("decimal(18,2)");
+
 			// Example seed:
 			modelBuilder.Entity<Cheese>().HasData(
-				new Cheese { Id = 1, Name = "Cheese", Price = 100, Quantity = 10, ExpiryDate = DateTime.UtcNow.AddDays(5), Weight = 0.2 }
+				new Cheese { Id = 1, Name = "Cheese", Price = 100, Quantity = 10, ExpiryDate = new DateTime(2025, 7, 10, 0, 0, 0, DateTimeKind.Utc), Weight = 0.2 }
 			);
 			modelBuilder.Entity<Biscuits>().HasData(
-				new Biscuits { Id = 2, Name = "Biscuits", Price = 150, Quantity = 5, ExpiryDate = DateTime.UtcNow.AddDays(10), Weight = 0.7 }
+				new Biscuits { Id = 2, Name = "Biscuits", Price = 150, Quantity = 5, ExpiryDate = new DateTime(2025, 7, 14, 0, 0, 0, DateTimeKind.Utc), Weight = 0.7 }
 			);
 			modelBuilder.Entity<TV>().HasData(
 				new TV { Id = 3, Name = "TV", Price = 5000, Quantity = 3, Weight = 10 }
