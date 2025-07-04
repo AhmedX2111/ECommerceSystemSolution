@@ -19,6 +19,15 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IShippingService, ShippingService>();
 builder.Services.AddScoped<CheckoutService>();
 
+builder.Services.AddCors(options =>
+{
+	options.AddPolicy("AllowFrontend",
+		policy => policy
+			.WithOrigins("http://localhost:4200")
+			.AllowAnyHeader()
+			.AllowAnyMethod());
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -29,6 +38,8 @@ if (app.Environment.IsDevelopment() || app.Environment.IsStaging() || app.Enviro
 	app.UseSwagger();
 	app.UseSwaggerUI();
 }
+
+app.UseCors("AllowFrontend");
 
 app.UseHttpsRedirection();
 app.UseAuthorization();

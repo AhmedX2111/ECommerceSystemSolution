@@ -20,13 +20,16 @@ namespace ECommerceSystemAPI.Controllers
 			_checkoutService = checkoutService;
 		}
 
+		// POST: api/checkout
 		[HttpPost]
 		public IActionResult Checkout([FromBody] CheckoutRequestDto request)
 		{
+			// Validate customer
 			var customer = _db.Customers.Find(request.CustomerId);
 			if (customer == null)
 				return NotFound("Customer not found.");
 
+			// Validate products and build cart items
 			var cartItems = new List<CartItem>();
 			foreach (var item in request.Items)
 			{
@@ -38,6 +41,7 @@ namespace ECommerceSystemAPI.Controllers
 
 			try
 			{
+				// Call your checkout service to process the order
 				var result = _checkoutService.Checkout(customer, cartItems);
 				return Ok(result);
 			}
